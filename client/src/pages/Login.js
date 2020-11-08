@@ -1,23 +1,26 @@
 import React from "react";
-import Axios from "axios";
+import axios from "axios";
 import { useHistory } from "react-router-dom";
+import { setAccessToken } from "../auth/accessToken";
 
 function Login(){
 
   const history = useHistory();
 
   function login() {
-    Axios.post("/login", {
+    axios.post("/login", {
       username: 'user1',
       password: 'pass1',
-    }).then((_) => {
-      history.push("/private");
-    }, (error) => {
-      console.log(error);
+    }).then(response => {
+      if (response.data.Token){
+        setAccessToken(response.data.Token)
+        history.push("/private");
+      }
+    }).catch(error => {
+      console.log(error)
     })
-    
   }
-
+  
   return(
     <div>
       <h1>Login Page</h1>

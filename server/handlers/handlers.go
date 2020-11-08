@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/a-edwaar/jwt/server/auth"
-
 	"github.com/a-edwaar/jwt/server/models"
 )
 
@@ -43,14 +42,17 @@ func Login(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	// Generate access + refresh token
-	accessCookie, refreshCookie, err := auth.GenerateTokenPair(user)
+	accessToken, refreshCookie, err := auth.GenerateTokenPair(user)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	//Set cookies
-	http.SetCookie(w, accessCookie)
+	//Set refresh token cookie
 	http.SetCookie(w, refreshCookie)
+	//Write access token in response
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusAccepted)
+	json.NewEncoder(w).Encode(accessToken)
 }
 
 func Refresh(w http.ResponseWriter, r *http.Request) {
@@ -63,14 +65,17 @@ func Refresh(w http.ResponseWriter, r *http.Request) {
 	// Get user from db for id in token
 	userToLookup := users[userID.(string)]
 	// Generate access + refresh token
-	accessCookie, refreshCookie, err := auth.GenerateTokenPair(userToLookup)
+	accessToken, refreshCookie, err := auth.GenerateTokenPair(userToLookup)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	// Set cookies
-	http.SetCookie(w, accessCookie)
+	// Set refresh token cookie
 	http.SetCookie(w, refreshCookie)
+	//Write access token in response
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusAccepted)
+	json.NewEncoder(w).Encode(accessToken)
 }
 
 func Private(w http.ResponseWriter, r *http.Request) {
