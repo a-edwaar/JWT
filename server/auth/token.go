@@ -12,7 +12,12 @@ import (
 // Secret key to check signature
 var JWTKey = []byte("my_secret_key")
 
-func GenerateTokenPair(user models.User) (accessCookie *http.Cookie, refreshCookie *http.Cookie, err error) {
+// Struct for returning access token in response
+type AccessToken struct {
+	Token string
+}
+
+func GenerateTokenPair(user models.User) (accessToken *AccessToken, refreshCookie *http.Cookie, err error) {
 	// Generate access token
 	accessExpirationTime := time.Now().Add(5 * time.Minute)
 	claims := &Claims{
@@ -21,8 +26,8 @@ func GenerateTokenPair(user models.User) (accessCookie *http.Cookie, refreshCook
 			ExpiresAt: accessExpirationTime.Unix(),
 		},
 	}
-	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	at, err := accessToken.SignedString(JWTKey)
+	accessJWT := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	at, err := accessJWT.SignedString(JWTKey)
 	if err != nil {
 		return nil, nil, fmt.Errorf("Access token err: %s", err.Error())
 	}
@@ -34,25 +39,22 @@ func GenerateTokenPair(user models.User) (accessCookie *http.Cookie, refreshCook
 			ExpiresAt: refreshExpirationTime.Unix(),
 		},
 	}
-	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims)
-	rt, err := refreshToken.SignedString(JWTKey)
+	refreshJWT := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims)
+	refreshToken, err := refreshJWT.SignedString(JWTKey)
 	if err != nil {
 		return nil, nil, fmt.Errorf("Refresh token err: %s", err.Error())
 	}
-	// Create cookies
-	accessCookie = &http.Cookie{
-		Name:     "token",
-		Value:    at,
-		Expires:  accessExpirationTime,
-		HttpOnly: true,
-		// Secure: true,
+	// Create access token struct for response
+	accessToken = &AccessToken{
+		Token: at,
 	}
+	// Create refresh token cookie
 	refreshCookie = &http.Cookie{
 		Name:     "refresh",
-		Value:    rt,
+		Value:    refreshToken,
 		Expires:  refreshExpirationTime,
 		HttpOnly: true,
 		// Secure: true,
 	}
-	return accessCookie, refreshCookie, nil
+	return accessToken, refreshCookie, nil
 }

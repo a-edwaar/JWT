@@ -3,28 +3,25 @@ package middleware
 import (
 	"context"
 	"net/http"
+	"strings"
 
 	"github.com/a-edwaar/jwt/server/auth"
 	"github.com/a-edwaar/jwt/server/models"
 	"github.com/dgrijalva/jwt-go"
 )
 
+// Auth to check access token in header is valid
 func Auth(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// We can obtain the session token from the requests cookies, which come with every request
-		c, err := r.Cookie("token")
-		if err != nil {
-			if err == http.ErrNoCookie {
-				// If the cookie is not set, return an unauthorized status
-				w.WriteHeader(http.StatusUnauthorized)
-				return
-			}
-			// For any other type of error, return a bad request status
-			w.WriteHeader(http.StatusBadRequest)
+		// We can obtain the access token from the auth header
+		bearerToken := r.Header.Get("Authorization")
+		splitToken := strings.Split(bearerToken, "Bearer ")
+		if len(splitToken) != 2 {
+			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
+		tknStr := splitToken[1]
 		// Validate token
-		tknStr := c.Value
 		claims := &auth.Claims{}
 		tkn, err := jwt.ParseWithClaims(tknStr, claims, func(token *jwt.Token) (interface{}, error) {
 			return auth.JWTKey, nil
@@ -47,6 +44,7 @@ func Auth(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
+// Auth to check refresh token is valid
 func RefreshAuth(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Get cookie
