@@ -3,7 +3,7 @@
 This is a template repo to implement JWT authentication using Go and React
 
 ## Logic
-To further understand the flow of authentication I'm using check out this [doc](https://hasura.io/blog/best-practices-of-using-jwt-with-graphql/).
+To further understand the flow of authentication I'm using check out this [doc](https://hasura.io/blog/best-practices-of-using-jwt-with-graphql/). I'm using basic REST instead of GraphQL.
 
 ## Server
 
